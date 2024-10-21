@@ -4,7 +4,6 @@ import { titleToCaseIds } from './shared';
 import { Status, TestRailResult } from './testrail.interface';
 
 export class CypressTestRailReporter extends reporters.Spec {
-  private results: TestRailResult[] = [];
   private testRail: TestRail;
 
   constructor(runner: any, options: any) {
@@ -26,35 +25,40 @@ export class CypressTestRailReporter extends reporters.Spec {
     runner.on('pass', test => {
       const caseIds = titleToCaseIds(test.title);
       if (caseIds.length > 0) {
-        const results = caseIds.map(caseId => {
-          return {
-            case_id: caseId,
-            status_id: Status.Passed,
-            comment: `Execution time: ${test.duration}ms`,
-            elapsed: `${test.duration/1000}s`
-          };
-        });
-        this.results.push(...results);
+        
+        // For each item in caseIds, create a new result object
+        for (let i = 0; i < caseIds.length; i++) {
+          var result: TestRailResult[] = [];
+          result[0] = {
+              case_id: caseIds[i],
+              status_id: Status.Passed,
+              comment: `Execution time: ${test.duration}ms`
+            };
+          this.testRail.publishResults(result)
+        }
       }
     });
 
     runner.on('fail', test => {
       const caseIds = titleToCaseIds(test.title);
       if (caseIds.length > 0) {
-        const results = caseIds.map(caseId => {
-          return {
-            case_id: caseId,
-            status_id: Status.Failed,
-            comment: `${test.err.message}`,
-          };
-        });
-        this.results.push(...results);
+        // For each item in caseIds, create a new result object
+        // Test
+        for (let i = 0; i < caseIds.length; i++) {
+          var result: TestRailResult[] = [];
+          result[0] = {
+              case_id: caseIds[i],
+              status_id: Status.Failed,
+              comment: `${test.err.message}`
+            };
+          this.testRail.publishResults(result)
+        }
       }
     });
 
     runner.on('end', () => {
       // publish test cases results & close the run
-      this.testRail.publishResults(this.results)
+      // Do Nothing, all results should already be published
     });
   }
 
